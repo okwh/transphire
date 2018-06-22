@@ -48,6 +48,12 @@ def get_motion_default(settings, motion_frames, queue_com, name):
                 settings[motion_name]['-kV'] != '0'
                 )
 
+    elif motion_name == 'Unblur v1.0.2':
+        motion_frames['last'] = int(settings['General']['Number of frames'])
+        motion_frames['first'] = 1
+
+        return bool(settings[motion_name]['Apply Dose filter?'] == 'True')
+
     else:
         message = '\n'.join([
             '{0}: Motion version not known.'.format(motion_name),
@@ -77,6 +83,12 @@ def get_dw_file_name(output_transfer_scratch, file_name, settings, queue_com, na
     if motion_name == 'MotionCor2 v1.0.0' or \
             motion_name == 'MotionCor2 v1.0.5' or \
             motion_name == 'MotionCor2 v1.1.0':
+        return os.path.join(
+            output_transfer_scratch,
+            '{0}_DW.mrc'.format(file_name)
+            )
+
+    elif motion_name == 'Unblur v1.0.2':
         return os.path.join(
             output_transfer_scratch,
             '{0}_DW.mrc'.format(file_name)
@@ -135,6 +147,17 @@ def get_motion_command(file_input, file_output_scratch, file_log_scratch, settin
                 block_gpu = False
             else:
                 block_gpu = True
+
+    elif motion_name == 'Unblur v1.0.2':
+        return create_unblur_v1_0_2_command(
+            motion_name=settings['Copy']['Motion'],
+            file_input=file_input,
+            file_output=file_output_scratch,
+            file_scratch=file_log_scratch,
+            settings=settings,
+            queue_com=queue_com,
+            name=name
+            )
 
     else:
         message = '\n'.join([
@@ -244,6 +267,60 @@ def create_sum_movie_command(
     return command, block_gpu, gpu_list
 
 
+def create_unblur_v1_0_2_command(
+        motion_name, file_input, file_output, file_shift,
+        settings, queue_com, name
+        ):
+    """
+    Create the Unblur v1.0.2 command.
+
+    motion_name - Sub frames settings dictionary
+    file_input - File to sum.
+    file_output - Output file name
+    file_shift - Output shift file name
+    settings - TranSPHIRE settings
+    queue_com - Queue for communication
+    name - Name of the process
+
+    Returns:
+    Command for Unblur v1.0.2
+    """
+    file_shift = '{0}_shift.txt'.format(file_shift)
+    file_frc = '{0}_frc.txt'.format(file_shift)
+    file_stack = '{0}_Stk.mrc'.format(os.path.splitext(file_output)[0])
+    sum_movie_command = []
+    # Input file
+    sum_movie_command.append('{0}'.format(file_input))
+    # Number of frames
+    sum_movie_command.append('{0}'.format(settings['General']['Number of frames'])
+    # Output sum file
+    sum_movie_command.append('{0}'.format(file_output))
+    # Output shift file
+    sum_movie_command.append('{0}'.format(file_shift))
+    # Dose weighting
+    if settings[motion_name]['Apply Dose filter?'] == 'True' and \
+            settings[motion_name]['Remove summed files?'] == 'False':
+        sum_movie_command.append('{0}'.format('Yes'))
+        sum_movie_command.append('{0}'.format(settings[motion_name]['Exposure per frame (e/A^2)']))
+        sum_movie_command.append('{0}'.format(settings[motion_name]['Acceleration voltage (kV)']))
+        sum_movie_command.append('{0}'.format(settings[motion_name]['Pre-exposure amount(e/A^2)']))
+    else:
+        sum_movie_command.append('{0}'.format('No'))
+
+    sum_movie_command.append(
+        '{0}'.format(settings[motion_name]['-PixSize'])
+        )
+    # Dose correction
+    sum_movie_command.append('No')
+
+    command = 'echo "{0}" | {1}'.format(
+        '\n'.join(sum_movie_command),
+        '{0}'.format(settings['Path']['SumMovie v1.0.2'])
+        )
+
+    return command
+
+
 def create_sum_movie_v1_0_2_command(
         motion_frames, file_input, file_output, file_shift, file_frc,
         settings, queue_com, name
@@ -277,6 +354,9 @@ def create_sum_movie_v1_0_2_command(
             int(settings[motion_name]['-Trunc']) -
             int(settings[motion_name]['-Throw'])
             ))
+
+    elif motion_name == 'Unblur v1.0.2':
+        sum_movie_command.append('{0}'.format(settings['General']['Number of frames'])
 
     else:
         message = '\n'.join([

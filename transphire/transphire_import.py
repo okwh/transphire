@@ -265,6 +265,10 @@ def get_dtype_import_dict():
         ('shift_x', '<f8'),
         ('shift_y', '<f8')
         ]
+    dtype_import['Unblur v1.0.2'] = [
+        ('shift_x', '<f8'),
+        ('shift_y', '<f8')
+        ]
     return dtype_import
 
 
@@ -307,7 +311,6 @@ def import_ctffind_v4_1_8(ctf_name, directory_name):
             array = np.genfromtxt(
                 name,
                 dtype=get_dtype_import_dict()[ctf_name],
-                encoding='utf-8'
                 )
         except ValueError:
             continue
@@ -335,7 +338,6 @@ def import_ctffind_v4_1_8(ctf_name, directory_name):
         data_name = np.genfromtxt(
             name,
             dtype=get_dtype_import_dict()[ctf_name],
-            encoding='utf-8'
             )
         data[idx]['file_name'] = name
         input_name = None
@@ -417,7 +419,6 @@ def import_gctf_v1_06(ctf_name, directory_name):
                 file_name,
                 dtype=dtype,
                 skip_header=max_header,
-                encoding='utf-8'
                 )
         except ValueError:
             continue
@@ -452,7 +453,6 @@ def import_gctf_v1_06(ctf_name, directory_name):
             file_name,
             dtype=dtype,
             skip_header=max_header,
-            encoding='utf-8'
             )
         for name in data_name.dtype.names:
             try:
@@ -513,7 +513,6 @@ def import_cter_v1_0(ctf_name, directory_name):
             data_name = np.genfromtxt(
                 file_name,
                 dtype=get_dtype_import_dict()[ctf_name],
-                encoding='utf-8'
                 )
         except ValueError:
             continue
@@ -540,7 +539,6 @@ def import_cter_v1_0(ctf_name, directory_name):
         data_name = np.genfromtxt(
             name,
             dtype=get_dtype_import_dict()[ctf_name],
-            encoding='utf-8'
             )
         for entry in data_name.dtype.names:
             data_original[idx][entry] = data_name[entry]
@@ -595,7 +593,6 @@ def import_motion_cor_2_v1_0_0(motion_name, directory_names):
             array = np.genfromtxt(
                 name,
                 dtype=get_dtype_import_dict()[motion_name],
-                encoding='utf-8'
                 )
         except ValueError:
             continue
@@ -614,16 +611,15 @@ def import_motion_cor_2_v1_0_0(motion_name, directory_names):
         data_name = np.genfromtxt(
             name,
             dtype=get_dtype_import_dict()[motion_name],
-            encoding='utf-8'
             )
         data[idx]['file_name'] = name
         shift_x = np.array([
             data_name['shift_x'][i+1] - data_name['shift_x'][i] \
-            for i in range(0, int(data_name['frame_number'][-1]-1))
+            for i in range(data_name.shape[0]-1)
             ])
         shift_y = np.array([
             data_name['shift_y'][i+1] - data_name['shift_y'][i] \
-            for i in range(0, int(data_name['frame_number'][-1]-1))
+            for i in range(data_name.shape[0]-1)
             ])
         for entry in data.dtype.names:
             if entry == 'overall drift':
@@ -646,7 +642,7 @@ def import_motion_cor_2_v1_0_5(motion_name, directory_names):
     Import motion information for MotionCor2 v1.0.5.
 
     Arguments:
-    ctf_name - Name of ctf program
+    motion_name - Name of motion program
     directory_name - Name of the directory to search for files
 
     Return:
@@ -661,7 +657,7 @@ def import_motion_cor_2_v1_1_0(motion_name, directory_names):
     Import motion information for MotionCor2 v1.1.0.
 
     Arguments:
-    ctf_name - Name of ctf program
+    motion_name - Name of motion program
     directory_name - Name of the directory to search for files
 
     Return:
@@ -669,3 +665,76 @@ def import_motion_cor_2_v1_1_0(motion_name, directory_names):
     """
     data = import_motion_cor_2_v1_0_0(motion_name=motion_name, directory_names=directory_names)
     return data
+
+
+def import_unblur_v1_0_2(motion_name, directory_names):
+    """
+    Import motion information for Unblur v1.0.2.
+
+    Arguments:
+    motion_name - Name of motion program
+    directory_name - Name of the directory to search for files
+
+    Return:
+    Imported data
+    """
+    files = np.array(
+        [
+            entry
+            for directory_name in directory_names
+            for entry in glob.glob('{0}/*_shift.txt'.format(directory_name))
+            ],
+        dtype=str
+        )
+
+    useable_files = []
+    for name in files:
+        try:
+            array = np.genfromtxt(
+                name
+                )
+        except ValueError:
+            continue
+        else:
+            if array.size > 0:
+                useable_files.append(name)
+            else:
+                continue
+
+    shift_x_idx = 0
+    shift_y_idx = 1
+
+    data = np.empty(
+        len(useable_files),
+        dtype=get_dtype_dict()['motion']
+        )
+    data = np.atleast_1d(data)
+    for idx, name in enumerate(useable_files):
+        data_name = np.genfromtxt(
+            name
+            )
+        data[idx]['file_name'] = name
+        shift_x = np.array([
+            data_name[shift_x_idx][i+1] - data_name[shift_x_idx][i] \
+            for i in range(data_name.shape[1]-1)
+            ])
+        shift_y = np.array([
+            data_name[shift_y_idx][i+1] - data_name[shift_y_idx][i] \
+            for i in range(data_name.shape[1]-1)
+            ])
+        for entry in data.dtype.names:
+            if entry == 'overall drift':
+                data[idx][entry] = np.sum(np.sqrt(shift_x**2 + shift_y**2))
+            elif entry == 'average drift per frame':
+                data[idx][entry] = np.sum(np.sqrt(shift_x**2 + shift_y**2))/len(shift_x)
+            elif entry == 'first frame drift':
+                data[idx][entry] = np.sqrt(shift_x[0]**2 + shift_y[0]**2)
+            elif entry == 'average drift per frame without first':
+                data[idx][entry] = np.sum(np.sqrt(shift_x[1:]**2 + shift_y[1:]**2))/len(shift_x)
+            else:
+                pass
+
+    data = np.sort(data, order='file_name')
+    return data
+
+
