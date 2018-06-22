@@ -137,6 +137,14 @@ def get_function_dict():
             'typ': 'motion',
             'allow_empty': ['-Dark', '-DefectFile', '-Gain'],
             },
+        'Unblur v1.0.2': {
+            'plot': tp.update_unblur_v1_0_2,
+            'plot_data': ti.import_unblur_v1_0_2,
+            'content': tc.default_unblur_v1_0_2,
+            'executable': True,
+            'typ': 'motion',
+            'allow_empty': [],
+            },
         'Mount': {
             'plot': None,
             'plot_data': None,

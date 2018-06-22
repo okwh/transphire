@@ -207,6 +207,35 @@ def default_path():
     return items
 
 
+def default_unblur():
+    """
+    Content of Font tab.
+
+    Arguments:
+    None
+
+    Return:
+    Content items as list
+    """
+    items = [
+        ['Apply Dose filter?', ['False', 'True'], bool, '', 'COMBO'],
+        ['Exposure per frame (e/A^2)', '1.0'], float, 'Apply Dose filter?:True', 'PLAIN'],
+        ['Acceleration voltage (kV)', '300.0'], float, 'Apply Dose filter?:True', 'PLAIN'],
+        ['Pre-exposure amount(e/A^2)', '0.0'], float, 'Apply Dose filter?:True', 'PLAIN'],
+        ['Set Expert Options?', ['False', 'True'], bool, '', 'COMBO'],
+        ['Minimum shift for initial search (Angstroms)', '2.0', float, 'Set Expert Options?:True', 'PLAIN'],
+        ['B-factor to apply to images (A^2)', '1500', float, 'Set Expert Options?:True', 'PLAIN'],
+        ['Half-width of central vertical line of Fourier mask', '1', float, 'Set Expert Options?:True', 'PLAIN'],
+        ['Half-width of central horizontal line of Fourier mask', '1', float, 'Set Expert Options?:True', 'PLAIN'],
+        ['Termination shift threshold', '0.1', float, 'Set Expert Options?:True', 'PLAIN'],
+        ['Maximum number of iterations', '10', int, 'Set Expert Options?:True', 'PLAIN'],
+        ['Restore Noise Power', ['True', 'False'], bool, 'Set Expert Options?:True', 'COMBO'],
+        ['Verbose Output?', ['False', 'True'], bool, 'Set Expert Options?:True', 'COMBO'],
+        ['Remove summed files?', ['False', 'True'], bool, '', 'COMBO'],
+        ]
+    return items
+
+
 def default_font():
     """
     Content of Font tab.
