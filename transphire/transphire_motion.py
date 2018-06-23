@@ -298,23 +298,41 @@ def create_unblur_v1_0_2_command(
     # Output shift file
     unblur_command.append('{0}'.format(file_shift))
     # Pixel size
-    unblur_command.append('{0}'.format(settings[motion_name]['-PixSize']))
+    unblur_command.append('{0}'.format(settings[motion_name]['Pixel size of images (A)']))
     # Dose weighting
-    if settings[motion_name]['Apply Dose filter?'] == 'True' and \
-            settings[motion_name]['Remove summed files?'] == 'False':
+    if settings[motion_name]['Apply Dose filter?'] == 'True':
         unblur_command.append('{0}'.format('Yes'))
         unblur_command.append('{0}'.format(settings[motion_name]['Exposure per frame (e/A^2)']))
         unblur_command.append('{0}'.format(settings[motion_name]['Acceleration voltage (kV)']))
         unblur_command.append('{0}'.format(settings[motion_name]['Pre-exposure amount(e/A^2)']))
     else:
         unblur_command.append('{0}'.format('No'))
-
-    # Dose correction
-    unblur_command.append('No')
+    # Save aligned frames
+    unblur_command.append('{0}'.format('Yes'))
+    unblur_command.append('{0}'.format(file_stack))
+    if settings[motion_name]['Set Expert Options?'] == 'True':
+        unblur_command.append('{0}'.format(file_frc))
+        unblur_command.append('{0}'.format(settings[motion_name]['Minimum shift for initial search (Angstroms)']))
+        unblur_command.append('{0}'.format(settings[motion_name]['Outer radius shift limit (Angstroms)']))
+        unblur_command.append('{0}'.format(settings[motion_name]['B-factor to apply to images (A^2)']))
+        unblur_command.append('{0}'.format(settings[motion_name]['Half-width of central vertical line of Fourier mask']))
+        unblur_command.append('{0}'.format(settings[motion_name]['Half-width of central horizontal line of Fourier mask']))
+        unblur_command.append('{0}'.format(settings[motion_name]['Termination shift threshold']))
+        unblur_command.append('{0}'.format(settings[motion_name]['Maximum number of iterations']))
+        if settings[motion_name]['Restore Noise Power'] == 'True':
+            unblur_command.append('{0}'.format('Yes'))
+        else:
+            unblur_command.append('{0}'.format('No'))
+        if settings[motion_name]['Verbose Output?'] == 'True':
+            unblur_command.append('{0}'.format('Yes'))
+        else:
+            unblur_command.append('{0}'.format('No'))
+    else:
+        unblur_command.append('{0}'.format('No'))
 
     command = 'echo "{0}" | {1}'.format(
         '\n'.join(unblur_command),
-        '{0}'.format(settings['Path']['SumMovie v1.0.2'])
+        '{0}'.format(settings['Path']['Unblur v1.0.2'])
         )
 
     return command

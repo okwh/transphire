@@ -244,6 +244,7 @@ def default_unblur():
     Content items as list
     """
     items = [
+        ['Pixel size of images (A)', '1.0'], float, '', 'PLAIN'],
         ['Apply Dose filter?', ['False', 'True'], bool, '', 'COMBO'],
         ['Exposure per frame (e/A^2)', '1.0'], float, 'Apply Dose filter?:True', 'PLAIN'],
         ['Acceleration voltage (kV)', '300.0'], float, 'Apply Dose filter?:True', 'PLAIN'],
@@ -251,6 +252,7 @@ def default_unblur():
         ['Set Expert Options?', ['False', 'True'], bool, '', 'COMBO'],
         ['Minimum shift for initial search (Angstroms)', '2.0', float, 'Set Expert Options?:True', 'PLAIN'],
         ['B-factor to apply to images (A^2)', '1500', float, 'Set Expert Options?:True', 'PLAIN'],
+        ['Outer radius shift limit (Angstroms)', '200.0', float, 'Set Expert Options?:True', 'PLAIN'],
         ['Half-width of central vertical line of Fourier mask', '1', float, 'Set Expert Options?:True', 'PLAIN'],
         ['Half-width of central horizontal line of Fourier mask', '1', float, 'Set Expert Options?:True', 'PLAIN'],
         ['Termination shift threshold', '0.1', float, 'Set Expert Options?:True', 'PLAIN'],
