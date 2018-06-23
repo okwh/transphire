@@ -266,33 +266,32 @@ def create_unblur_v1_0_2_command(
     file_shift = '{0}_shift.txt'.format(file_shift)
     file_frc = '{0}_frc.txt'.format(file_shift)
     file_stack = '{0}_Stk.mrc'.format(os.path.splitext(file_output)[0])
-    sum_movie_command = []
+    unblur_command = []
     # Input file
-    sum_movie_command.append('{0}'.format(file_input))
+    unblur_command.append('{0}'.format(file_input))
     # Number of frames
-    sum_movie_command.append('{0}'.format(settings['General']['Number of frames'])
+    unblur_command.append('{0}'.format(settings['General']['Number of frames'])
     # Output sum file
-    sum_movie_command.append('{0}'.format(file_output))
+    unblur_command.append('{0}'.format(file_output))
     # Output shift file
-    sum_movie_command.append('{0}'.format(file_shift))
+    unblur_command.append('{0}'.format(file_shift))
+    # Pixel size
+    unblur_command.append('{0}'.format(settings[motion_name]['-PixSize']))
     # Dose weighting
     if settings[motion_name]['Apply Dose filter?'] == 'True' and \
             settings[motion_name]['Remove summed files?'] == 'False':
-        sum_movie_command.append('{0}'.format('Yes'))
-        sum_movie_command.append('{0}'.format(settings[motion_name]['Exposure per frame (e/A^2)']))
-        sum_movie_command.append('{0}'.format(settings[motion_name]['Acceleration voltage (kV)']))
-        sum_movie_command.append('{0}'.format(settings[motion_name]['Pre-exposure amount(e/A^2)']))
+        unblur_command.append('{0}'.format('Yes'))
+        unblur_command.append('{0}'.format(settings[motion_name]['Exposure per frame (e/A^2)']))
+        unblur_command.append('{0}'.format(settings[motion_name]['Acceleration voltage (kV)']))
+        unblur_command.append('{0}'.format(settings[motion_name]['Pre-exposure amount(e/A^2)']))
     else:
-        sum_movie_command.append('{0}'.format('No'))
+        unblur_command.append('{0}'.format('No'))
 
-    sum_movie_command.append(
-        '{0}'.format(settings[motion_name]['-PixSize'])
-        )
     # Dose correction
-    sum_movie_command.append('No')
+    unblur_command.append('No')
 
     command = 'echo "{0}" | {1}'.format(
-        '\n'.join(sum_movie_command),
+        '\n'.join(unblur_command),
         '{0}'.format(settings['Path']['SumMovie v1.0.2'])
         )
 
