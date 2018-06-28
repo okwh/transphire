@@ -165,6 +165,17 @@ def get_motion_command(file_input, file_output_scratch, file_log_scratch, settin
         block_gpu = False
         shell = True
 
+    elif motion_name == 'Unblur v1.0.2':
+        return create_unblur_v1_0_2_command(
+            motion_name=settings['Copy']['Motion'],
+            file_input=file_input,
+            file_output=file_output_scratch,
+            file_scratch=file_log_scratch,
+            settings=settings,
+            queue_com=queue_com,
+            name=name
+            )
+
     else:
         message = '\n'.join([
             '{0}: Motion version not known.'.format(settings['Copy']['Motion']),
