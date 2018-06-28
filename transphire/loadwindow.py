@@ -62,6 +62,7 @@ class DefaultSettings(QDialog):
                     'Gctf',
                     'CTER',
                     'MotionCor2',
+                    'Unblur',
                     'crYOLO'
                     ],
                 QTabWidget(self)

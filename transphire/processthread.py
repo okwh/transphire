@@ -1694,13 +1694,14 @@ class ProcessThread(QThread):
                     queue_com=self.queue_com,
                     name=self.name
                     )
-                command, block_gpu, gpu_list = tum.get_motion_command(
+                command, block_gpu, gpu_list, shell = tum.get_motion_command(
                     file_input=file_input,
                     file_output_scratch=file_output_scratch,
                     file_log_scratch=file_log_scratch,
                     queue_com=self.queue_com,
                     name=self.name,
                     settings=self.settings,
+                    file_shift=file_shift,
                     )
 
                 file_stdout_scratch, file_stderr_scratch = self.run_command(
@@ -1708,7 +1709,7 @@ class ProcessThread(QThread):
                     log_prefix=file_log_scratch,
                     block_gpu=block_gpu,
                     gpu_list=gpu_list,
-                    shell=False
+                    shell=shell
                     )
                 file_stdout = file_stdout_scratch.replace(
                     output_transfer_log_scratch,

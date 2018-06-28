@@ -143,6 +143,8 @@ def get_function_dict():
             'content': tc.default_cryolo_v1_0_0,
             'executable': True,
             'typ': 'picking',
+            'allow_empty': [],
+            },
         'Unblur v1.0.2': {
             'plot': tp.update_unblur_v1_0_2,
             'plot_data': ti.import_unblur_v1_0_2,

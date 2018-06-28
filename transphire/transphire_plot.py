@@ -276,3 +276,23 @@ def update_motion_cor_2_v1_0_5(data, settings, label):
         label=label
         )
     return x_values, y_values, label, title
+
+
+def update_unblur_v1_0_2(data, settings, label):
+    """
+    Update the plot for Unblur v1.0.2.
+
+    Arguments:
+    data - Data to plot
+    settings - User provided settings
+    label - Label of the plot
+
+    Return:
+    x values, y values, label, title
+    """
+    x_values, y_values, label, title = update_motion_cor_2_v1_0_0(
+        data=data,
+        settings=settings,
+        label=label
+        )
+    return x_values, y_values, label, title

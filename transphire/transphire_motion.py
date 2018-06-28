@@ -106,7 +106,7 @@ def get_dw_file_name(output_transfer_scratch, file_name, settings, queue_com, na
         raise IOError(message)
 
 
-def get_motion_command(file_input, file_output_scratch, file_log_scratch, settings, queue_com, name):
+def get_motion_command(file_input, file_output_scratch, file_log_scratch, settings, queue_com, name, file_shift):
     """
     Get the command for the selected motion software.
 
@@ -116,6 +116,7 @@ def get_motion_command(file_input, file_output_scratch, file_log_scratch, settin
     settings - TranSPHIRE settings.
     queue_com - Queue for communication.
     name - Name of the process.
+    file_shift - Path of file with zeros shift
 
     Returns:
     Motion command
@@ -124,6 +125,7 @@ def get_motion_command(file_input, file_output_scratch, file_log_scratch, settin
     command = None
     block_gpu = None
     gpu_list = None
+    shell = None
     if motion_name == 'MotionCor2 v1.0.0' or \
             motion_name == 'MotionCor2 v1.0.5' or \
             motion_name == 'MotionCor2 v1.1.0':
@@ -137,6 +139,7 @@ def get_motion_command(file_input, file_output_scratch, file_log_scratch, settin
             name=name
             )
         gpu_list = settings[motion_name]['-Gpu'].split()
+        shell = False
 
         if motion_name == 'MotionCor2 v1.0.0':
             block_gpu = False
@@ -149,15 +152,18 @@ def get_motion_command(file_input, file_output_scratch, file_log_scratch, settin
                 block_gpu = True
 
     elif motion_name == 'Unblur v1.0.2':
-        return create_unblur_v1_0_2_command(
+        command = create_unblur_v1_0_2_command(
             motion_name=settings['Copy']['Motion'],
             file_input=file_input,
             file_output=file_output_scratch,
-            file_scratch=file_log_scratch,
+            file_log=file_log_scratch,
             settings=settings,
             queue_com=queue_com,
             name=name
             )
+        gpu_list = []
+        block_gpu = False
+        shell = True
 
     else:
         message = '\n'.join([
@@ -174,7 +180,7 @@ def get_motion_command(file_input, file_output_scratch, file_log_scratch, settin
     assert block_gpu is not None, 'block_gpu not specified: {0}'.format(motion_name)
     assert gpu_list is not None, 'gpu_list not specified: {0}'.format(motion_name)
 
-    return command, block_gpu, gpu_list
+    return command, block_gpu, gpu_list, shell
 
 
 def create_motion_cor_2_v1_0_0_command(motion_name, file_input, file_output, file_log, settings, queue_com, name):
@@ -253,11 +259,12 @@ def create_sum_movie_command(
     Command for SumMovie
     """
     command = create_sum_movie_v1_0_2_command(
-        motion_frames=motion_frames,
         file_input=file_input,
         file_output=file_output,
         file_shift=file_shift,
         file_frc=file_frc,
+        first=motion_frames['first'],
+        last=motion_frames['last'],
         settings=settings,
         queue_com=queue_com,
         name=name
@@ -268,7 +275,7 @@ def create_sum_movie_command(
 
 
 def create_unblur_v1_0_2_command(
-        motion_name, file_input, file_output, file_shift,
+        motion_name, file_input, file_output, file_log,
         settings, queue_com, name
         ):
     """
@@ -285,14 +292,14 @@ def create_unblur_v1_0_2_command(
     Returns:
     Command for Unblur v1.0.2
     """
-    file_shift = '{0}_shift.txt'.format(file_shift)
-    file_frc = '{0}_frc.txt'.format(file_shift)
+    file_shift = '{0}_shift.txt'.format(file_log)
+    file_frc = '{0}_frc.txt'.format(file_log)
     file_stack = '{0}_Stk.mrc'.format(os.path.splitext(file_output)[0])
     unblur_command = []
     # Input file
     unblur_command.append('{0}'.format(file_input))
     # Number of frames
-    unblur_command.append('{0}'.format(settings['General']['Number of frames'])
+    unblur_command.append('{0}'.format(settings['General']['Number of frames']))
     # Output sum file
     unblur_command.append('{0}'.format(file_output))
     # Output shift file
@@ -330,22 +337,40 @@ def create_unblur_v1_0_2_command(
     else:
         unblur_command.append('{0}'.format('No'))
 
-    command = 'echo "{0}" | {1}'.format(
-        '\n'.join(unblur_command),
-        '{0}'.format(settings['Path']['Unblur v1.0.2'])
+    command = []
+    command.append(
+        'echo "{0}" | {1}'.format(
+            '\n'.join(unblur_command),
+            '{0}'.format(settings['Path']['Unblur v1.0.2'])
+            )
+        )
+    command.append(';')
+    command.append(
+        create_sum_movie_v1_0_2_command(
+            file_input=file_input,
+            file_output=file_output,
+            file_shift=file_shift,
+            file_frc=file_frc,
+            first=int(settings[motion_name]['Throw'])+1,
+            last=\
+                int(settings['General']['Number of frames'])-\
+                int(settings[motion_name]['Trunc']),
+            settings=settings,
+            queue_com=queue_com,
+            name=name
+            )
         )
 
-    return command
+    return ' '.join(command)
 
 
 def create_sum_movie_v1_0_2_command(
-        motion_frames, file_input, file_output, file_shift, file_frc,
-        settings, queue_com, name
+        file_input, file_output, file_shift, file_frc,
+        settings, queue_com, name, first, last
         ):
     """
     Create the SumMovie v1.0.2 command.
 
-    motion_frames - Sub frames settings dictionary
     file_input - File to sum.
     file_output - Output file name
     file_shift - Output shift file name
@@ -373,7 +398,7 @@ def create_sum_movie_v1_0_2_command(
             ))
 
     elif motion_name == 'Unblur v1.0.2':
-        sum_movie_command.append('{0}'.format(settings['General']['Number of frames'])
+        sum_movie_command.append('{0}'.format(settings['General']['Number of frames']))
 
     else:
         message = '\n'.join([
@@ -393,9 +418,9 @@ def create_sum_movie_v1_0_2_command(
     # FRC file
     sum_movie_command.append('{0}'.format(file_frc))
     # First frame
-    sum_movie_command.append('{0}'.format(motion_frames['first']))
+    sum_movie_command.append('{0}'.format(first))
     # Last frame
-    sum_movie_command.append('{0}'.format(motion_frames['last']))
+    sum_movie_command.append('{0}'.format(last))
     # Pixel size
 
     if motion_name == 'MotionCor2 v1.0.0' or \
@@ -403,6 +428,11 @@ def create_sum_movie_v1_0_2_command(
             motion_name == 'MotionCor2 v1.1.0':
         sum_movie_command.append(
             '{0}'.format(settings[motion_name]['-PixSize'])
+            )
+
+    elif motion_name == 'Unblur v1.0.2':
+        sum_movie_command.append(
+            '{0}'.format(settings[motion_name]['Pixel size of images (A)'])
             )
 
     else:
@@ -417,7 +447,16 @@ def create_sum_movie_v1_0_2_command(
         raise IOError(message)
 
     # Dose correction
-    sum_movie_command.append('No')
+    if motion_name == 'Unblur v1.0.2':
+        if settings[motion_name]['Apply Dose filter?'] == 'True':
+            sum_movie_command.append('{0}'.format('Yes'))
+            sum_movie_command.append('{0}'.format(settings[motion_name]['Exposure per frame (e/A^2)']))
+            sum_movie_command.append('{0}'.format(settings[motion_name]['Acceleration voltage (kV)']))
+            sum_movie_command.append('{0}'.format(settings[motion_name]['Pre-exposure amount(e/A^2)']))
+        else:
+            unblur_command.append('{0}'.format('No'))
+    else:
+        sum_movie_command.append('No')
 
     command = 'echo "{0}" | {1}'.format(
         '\n'.join(sum_movie_command),
